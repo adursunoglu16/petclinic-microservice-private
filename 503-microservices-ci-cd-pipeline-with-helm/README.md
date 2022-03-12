@@ -1597,7 +1597,7 @@ git push --set-upstream origin feature/msp-17
         PATH="$PATH:/usr/local/bin"
         APP_REPO_NAME="clarusway-repo/petclinic-app-dev" # Write your own repo name
         AWS_REGION="us-east-1" #Update this line if you work on another region
-        ECR_REGISTRY="933567932655.dkr.ecr.us-east-1.amazonaws.com" # Replace this line with your ECR name
+        ECR_REGISTRY="046402772087.dkr.ecr.us-east-1.amazonaws.com" # Replace this line with your ECR name
         aws ecr create-repository \
             --repository-name ${APP_REPO_NAME} \
             --image-scanning-configuration scanOnPush=false \
@@ -2156,35 +2156,15 @@ pipeline {
             steps {
                 echo 'Creating Infrastructure for QA Environment with Cloudfomation'
                 sh "aws cloudformation create-stack --region ${AWS_REGION} --stack-name ${APP_STACK_NAME} --capabilities CAPABILITY_IAM --template-body file://${CFN_TEMPLATE} --parameters ParameterKey=KeyPairName,ParameterValue=${CFN_KEYPAIR}"
-
+                sh "aws cloudformation wait stack-create-complete --stack-name ${APP_STACK_NAME}" 
                 script {
-                    while(true) {
-                        echo "Docker Grand Master is not UP and running yet. Will try to reach again after 10 seconds..."
-                        sleep(10)
-
-                        ip = sh(script:"aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=grand-master Name=tag-value,Values=${APP_STACK_NAME} --query Reservations[*].Instances[*].[PublicIpAddress] --output text", returnStdout:true).trim()
-
-                        if (ip.length() >= 7) {
-                            echo "Docker Grand Master Public Ip Address Found: $ip"
-                            env.GRAND_MASTER_PUBLIC_IP = "$ip"
-                            break
-                        }
-                    }
-                    while(true) {
-                        try{
-                            sh "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${JENKINS_HOME}/.ssh/${CFN_KEYPAIR} ec2-user@${GRAND_MASTER_PUBLIC_IP} hostname"
-                            echo "Docker Grand Master is reachable with SSH."
-                            break
-                        }
-                        catch(Exception){
-                            echo "Could not connect to Docker Grand Master with SSH, I will try again in 10 seconds"
-                            sleep(10)
-                        }
-                    }
+                    echo "Docker Grand Master is not UP and running yet."
+                    env.id = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=grand-master Name=tag-value,Values=${APP_STACK_NAME} Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
+                    sh 'aws ec2 wait instance-status-ok --instance-ids $id'
                 }
+                
             }
         }
-
         stage('Create Docker Swarm for QA Environment') {
             steps {
                 echo "Setup Docker Swarm for QA Environment for ${APP_NAME} App"
@@ -2299,7 +2279,7 @@ docker push "${IMAGE_TAG_GRAFANA_SERVICE}"
 docker push "${IMAGE_TAG_PROMETHEUS_SERVICE}"
 ```
 
-- Prepare a docker compose file for swarm deployment on QA environment and save it as `docker-compose-swarm-qa.yml`.
+- Prepare a docker compose file for swarm deployment on QA environment and save it as `docker-compose-swarm-qa.yml` under the project root folder.
 
 ```yaml
 version: '3.8'
