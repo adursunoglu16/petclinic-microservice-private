@@ -2936,7 +2936,7 @@ services:
     creation: 6h
     retention: 24h
 
-ssh_key_path: ~/.ssh/call-rancher.pem
+ssh_key_path: ~/.ssh/davids-test-rancher.key
 
 # Required for external TLS termination with
 # ingress-nginx v0.22+
@@ -2961,6 +2961,13 @@ mv ./kube_config_rancher-cluster.yml $HOME/.kube/config
 chmod 400 ~/.kube/config
 kubectl get nodes
 kubectl get pods --all-namespaces
+```
+
+* If bootstrap pod is not initialized or you forget your admin password you can use the below command to reset your password.
+
+```bash
+KUBECONFIG=~/.kube/config
+kubectl --kubeconfig $KUBECONFIG -n cattle-system exec $(kubectl --kubeconfig $KUBECONFIG -n cattle-system get pods -l app=rancher | grep '1/1' | head -1 | awk '{ print $1 }') -- reset-password
 ```
 
 * Commit the change, then push the script to the remote repo.
@@ -3125,13 +3132,6 @@ sudo mv ./kompose /usr/local/bin/kompose
 kompose version
 ```
 
-* Install Helm [version 3+](https://github.com/helm/helm/releases) on Jenkins Server. [Introduction to Helm](https://helm.sh/docs/intro/). [Helm Installation](https://helm.sh/docs/intro/install/).
-
-```bash
-curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-helm version
-```
-
 * Create an helm chart named `petclinic_chart` under `k8s` folder.
 
 ```bash
@@ -3148,7 +3148,7 @@ rm -r petclinic_chart/templates/*
 * Convert the `docker-compose.yml` into k8s/petclinic_chart/templates objects and save under `k8s/petclinic_chart` folder.
 
 ```bash
-kompose convert -f k8s/docker-compose.yml -o k8s/petclinic_chart/templates
+kompose convert -f docker-compose.yml -o petclinic_chart/templates
 ```
 
 * Update deployment files with `init-containers` to launch microservices in sequence. See [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/).
@@ -3169,7 +3169,7 @@ kompose convert -f k8s/docker-compose.yml -o k8s/petclinic_chart/templates
 * Update `spec.rules.host` field of `api-gateway-ingress.yaml` file as below.
 
 ```yaml
-'{{ .Values.DNS_NAME }}'.
+'{{ .Values.DNS_NAME }}'
 ```
 
 * Add `k8s/petclinic_chart/values-template.yaml` file as below.
@@ -3185,10 +3185,11 @@ IMAGE_TAG_ADMIN_SERVER: "${IMAGE_TAG_ADMIN_SERVER}"
 IMAGE_TAG_HYSTRIX_DASHBOARD: "${IMAGE_TAG_HYSTRIX_DASHBOARD}"
 IMAGE_TAG_GRAFANA_SERVICE: "${IMAGE_TAG_GRAFANA_SERVICE}"
 IMAGE_TAG_PROMETHEUS_SERVICE: "${IMAGE_TAG_PROMETHEUS_SERVICE}"
-DNS_NAME: <"DNS Name of your application">
+DNS_NAME: "DNS Name of your application"
 ```
 
-* Check if the petclinic_chart working as expected.
+* Check if the petclinic_chart working as expected. 
+
 
 ```bash
 export IMAGE_TAG_CONFIG_SERVER="testing-image-1"    
@@ -3255,7 +3256,7 @@ helm package petclinic_chart/
 * Store the local package in the Amazon S3 Helm repository.
 
 ```bash
-helm s3 push ./petclinic_chart-1.1.1.tgz stable-petclinicapp
+HELM_S3_MODE=3 AWS_REGION=us-east-1 helm s3 push ./petclinic_chart-1.1.1.tgz stable-petclinicapp
 ```
 
 * Search for the Helm chart.
@@ -3440,9 +3441,9 @@ docker push "${IMAGE_TAG_PROMETHEUS_SERVICE}"
 * Install `Rancher CLI` on Jenkins Server.
 
 ```bash
-curl -SsL "https://github.com/rancher/cli/releases/download/v2.4.13/rancher-linux-amd64-v2.4.13.tar.gz" -o "rancher-cli.tar.gz"
+curl -SsL "https://github.com/rancher/cli/releases/download/v2.4.13/rancher-linux-amd64-v2.6.0.tar.gz" -o "rancher-cli.tar.gz"
 tar -zxvf rancher-cli.tar.gz
-sudo mv ./rancher-v2.4.13/rancher /usr/local/bin/rancher
+sudo mv ./rancher-v2.6.0/rancher /usr/local/bin/rancher
 chmod +x /usr/local/bin/rancher
 rancher --version
 ```
@@ -3463,7 +3464,7 @@ rancher --version
 
 ``` groovy
 pipeline {
-    agent { label "master" }
+    agent any
     environment {
         PATH=sh(script:"echo $PATH:/usr/local/bin", returnStdout:true).trim()
         APP_NAME="petclinic"
@@ -3695,7 +3696,7 @@ spec:
 
 ``` groovy
 pipeline {
-    agent { label "master" }
+    agent any
     environment {
         PATH=sh(script:"echo $PATH:/usr/local/bin", returnStdout:true).trim()
         APP_NAME="petclinic"
@@ -3855,7 +3856,7 @@ kubectl get ns
   * Install the `Custom Resource Definition` resources separately
 
   ```bash
-  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.5.0/cert-manager.crds.yaml
+  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.1/cert-manager.crds.yaml
   ```
 
   * Install the cert-manager Helm chart
@@ -3864,7 +3865,7 @@ kubectl get ns
   helm install \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
-  --version v1.5.0
+  --version v1.7.1
   ```
 
   * Verify that the cert-manager is deployed correctly.
