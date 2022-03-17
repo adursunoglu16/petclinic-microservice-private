@@ -3462,7 +3462,7 @@ rancher --version
 * On some systems we need to install Helm S3 plugin as Jenkins user to be able to use S3 with pipeline script. 
 
 ``` bash
-sudo su -s bin/bash jenkins
+sudo su -s /bin/bash jenkins
 export PATH=$PATH:/usr/local/bin
 helm version
 helm plugin install https://github.com/hypnoglow/helm-s3.git
@@ -3482,11 +3482,11 @@ pipeline {
         AWS_ACCOUNT_ID=sh(script:'export PATH="$PATH:/usr/local/bin" && aws sts get-caller-identity --query Account --output text', returnStdout:true).trim()
         AWS_REGION="us-east-1"
         ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        RANCHER_URL="https://rancher.clarusway.us"
+        RANCHER_URL="https://rancher.adursunawsdevops.com"
         // Get the project-id from Rancher UI (petclinic-cluster-staging namespace, View in API, copy projectId )
-        RANCHER_CONTEXT="petclinic-cluster:project-id" 
+        RANCHER_CONTEXT="c-7vtv2:p-qnj5t" 
        //First part of projectID
-        CLUSTERID="petclinic-cluster"
+        CLUSTERID="c-7vtv2"
         RANCHER_CREDS=credentials('rancher-petclinic-credentials')
     }
     stages {
