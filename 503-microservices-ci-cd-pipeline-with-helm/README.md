@@ -2966,7 +2966,7 @@ kubectl get pods --all-namespaces
 * If bootstrap pod is not initialized or you forget your admin password you can use the below command to reset your password.
 
 ```bash
-KUBECONFIG=~/.kube/config
+export KUBECONFIG=~/.kube/config
 kubectl --kubeconfig $KUBECONFIG -n cattle-system exec $(kubectl --kubeconfig $KUBECONFIG -n cattle-system get pods -l app=rancher | grep '1/1' | head -1 | awk '{ print $1 }') -- reset-password
 ```
 
@@ -3441,7 +3441,7 @@ docker push "${IMAGE_TAG_PROMETHEUS_SERVICE}"
 * Install `Rancher CLI` on Jenkins Server.
 
 ```bash
-curl -SsL "https://github.com/rancher/cli/releases/download/v2.4.13/rancher-linux-amd64-v2.6.0.tar.gz" -o "rancher-cli.tar.gz"
+curl -SsL "https://github.com/rancher/cli/releases/download/v2.6.0/rancher-linux-amd64-v2.6.0.tar.gz" -o "rancher-cli.tar.gz"
 tar -zxvf rancher-cli.tar.gz
 sudo mv ./rancher-v2.6.0/rancher /usr/local/bin/rancher
 chmod +x /usr/local/bin/rancher
@@ -3457,6 +3457,16 @@ rancher --version
   * Paste `Access Key (username)` to Username field and `Secret Key (password)` to Password field.
 
   * Define an id like `rancher-petclinic-credentials`.
+
+
+* On some systems we need to install Helm S3 plugin as Jenkins user to be able to use S3 with pipeline script. 
+
+``` bash
+sudo su -s bin/bash jenkins
+export PATH=$PATH:/usr/local/bin
+helm version
+helm plugin install https://github.com/hypnoglow/helm-s3.git
+``` 
 
 * Create a Staging Pipeline on Jenkins with name of `petclinic-staging` with following script and configure a `cron job` to trigger the pipeline every Sundays at midnight (`59 23 * * 0`) on `release` branch. `Petclinic staging pipeline` should be deployed on permanent staging-environment on `petclinic-cluster` Kubernetes cluster under `petclinic-staging-ns` namespace.
 
