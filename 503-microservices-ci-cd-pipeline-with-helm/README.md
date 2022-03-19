@@ -3697,7 +3697,7 @@ metadata:
   name: mysql-server
 spec:
   type: ExternalName
-  externalName: petclinic.cbanmzptkrzf.us-east-1.rds.amazonaws.com # Change this line with the endpoint of your RDS.
+  externalName: petclinic-microservice.c1fj8qls2mtg.us-east-1.rds.amazonaws.com # Change this line with the endpoint of your RDS.
 ```
 
 * Create a `Production Pipeline` on Jenkins with name of `petclinic-prod` with following script and configure a `github-webhook` to trigger the pipeline every `commit` on `main` branch. `Petclinic production pipeline` should be deployed on permanent prod-environment on `petclinic-cluster` Kubernetes cluster under `petclinic-prod-ns` namespace.
